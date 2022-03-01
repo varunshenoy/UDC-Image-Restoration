@@ -1,4 +1,5 @@
 import torch
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 from glob import glob
 from torch.utils.data import Dataset, DataLoader
 import skimage.io
@@ -11,13 +12,20 @@ from tqdm import tqdm
 torch.manual_seed(1)
 torch.use_deterministic_algorithms(True)
 
-class UDCDataset():
-    def __init__(self, type="Poled"):
-        LQ_fnames = sorted(glob(os.path.join("./images", f"train/{type}/", "LQ", '*')))
-        HQ_fnames = sorted(glob(os.path.join("./images", f"train/{type}/", "HQ", '*')))
+class UDCDataset(Dataset):
+    def __init__(self, type="Toled"):
+        if os.path.exists("./lq.npy"):
+            self.lq_images = np.load("./lq.npy")
+            self.hq_images = np.load("./hq.npy")
+        else:
+            LQ_fnames = sorted(glob(os.path.join("./images", f"train/{type}/", "LQ", '*')))
+            HQ_fnames = sorted(glob(os.path.join("./images", f"train/{type}/", "HQ", '*')))
         
-        self.lq_images = self.load_images(LQ_fnames)
-        self.hq_images = self.load_images(HQ_fnames)
+            self.lq_images = self.load_images(LQ_fnames)
+            self.hq_images = self.load_images(HQ_fnames)
+
+            np.save("./lq.npy", self.lq_images)
+            np.save("./hq.npy", self.hq_images)
 
     def load_images(self, files):
         print("Importing images...")
@@ -25,12 +33,13 @@ class UDCDataset():
         out = []
         for fname in files:
             img = skimage.io.imread(fname)
+            # img_tensor = torch.reshape(torch.from_numpy(img).float().to(device), (1,3,img.shape[0],img.shape[1]))
             out.append(torch.from_numpy(img))
             pbar.update(1)
         return torch.stack(out)
 
     def __len__(self):
-        return len(lq_images)
+        return len(self.lq_images)
 
     def __getitem__(self, idx):
         return (self.lq_images[idx], self.hq_images[idx])
