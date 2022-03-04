@@ -7,6 +7,9 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from skimage.transform import rescale, resize, downscale_local_mean
+from torchvision import transforms
+from scipy.ndimage.filters import gaussian_filter
 
 # set random seeds
 torch.manual_seed(1)
@@ -24,15 +27,23 @@ class UDCDataset(Dataset):
             self.lq_images = self.load_images(LQ_fnames)
             self.hq_images = self.load_images(HQ_fnames)
 
-            np.save("./lq.npy", self.lq_images)
-            np.save("./hq.npy", self.hq_images)
+            np.save("./lq-blur.npy", self.lq_images)
+            np.save("./hq-blur.npy", self.hq_images)
+        self.transform = transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip()
+        ])
 
     def load_images(self, files):
         print("Importing images...")
         pbar = tqdm(total=len(files))
         out = []
         for fname in files:
-            img = skimage.io.imread(fname)
+            img = skimage.io.imread(fname)/255.
+            img = resize(img, (325, 650), anti_aliasing=True)
+            img = np.moveaxis(np.array([gaussian_filter(img[:,:,0], sigma=1), 
+                                        gaussian_filter(img[:,:,1], sigma=1),
+                                        gaussian_filter(img[:,:,2], sigma=1)]), 0, -1)
             # img_tensor = torch.reshape(torch.from_numpy(img).float().to(device), (1,3,img.shape[0],img.shape[1]))
             out.append(torch.from_numpy(img))
             pbar.update(1)
@@ -51,9 +62,8 @@ class UDCDataset(Dataset):
         f.add_subplot(1,2, 2)
         plt.imshow(self.hq_images[idx])
         plt.show(block=True)
-
-# ds = UDCDataset()
-# ds.display(3)
-# ds.display(10)
-# ds.display(100)
-# ds.display(231)
+    
+    transform = transforms.Compose([
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor()
+    ])
