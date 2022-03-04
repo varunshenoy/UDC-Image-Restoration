@@ -8,9 +8,6 @@ import scipy
 import torch
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-# DnCNN model from Kai Zhag
-from network_dncnn import DnCNN as net
-
 def display_two(img1, img2):
     f = plt.figure()
     f.add_subplot(1,2, 1)

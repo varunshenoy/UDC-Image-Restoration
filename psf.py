@@ -62,8 +62,7 @@ def train_test_split(dataset):
 def train_simple(dataset):
     net = ResNet(hidden_layers=9).to(device)
     print(net)
-    train, test, val = train_test_split(dataset)
-    dataloader = torch.utils.data.DataLoader(train, batch_size=1, shuffle=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True)
     optimizer = optim.Adam(net.parameters(), lr=0.01)
     crit = nn.L1Loss()
     for epoch in range(20):  # loop over the dataset multiple times
@@ -101,54 +100,23 @@ def train_simple(dataset):
     return net, test, val
 
 def main():
+
+    # Load dataset
     data = UDCDataset()
     print(data.lq_images.shape)
 
+    # split data
+    train, test, val = train_test_split(data)
+
+    # Set up model for inference
     model = ResNet(hidden_layers=9)
-    model.load_state_dict(torch.load("./resnet-5.pth", map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load("./final_model.pth", map_location=torch.device('cpu')))
 
-    point = data[110]
-    print(data[3])
-    print(point[0].shape)
-    blur = np.moveaxis(np.array([gaussian_filter(point[0][:,:,0], sigma=1.5), 
-            gaussian_filter(point[0][:,:,1], sigma=1.5),
-            gaussian_filter(point[0][:,:,2], sigma=1.5)]), 0, -1)
-    #blur = point[0]
-    print(blur.shape)
+    # Test random image from val set
+    point = val[0]
     tensor = torch.from_numpy(point[0]).float()
-    print(tensor.shape)
     res = model(torch.unsqueeze(tensor, 0).permute(0, 3, 1, 2))[0].permute(1, 2, 0).cpu().detach().numpy()
-    print(res)
-    utils.display_three(blur, point[1], res)
-    # model = train_simple(data)
-    # torch.save(model.state_dict(), "./mymodel.pth")
-
-    #res = np.moveaxis(train(data).cpu().detach().numpy(), 0, -1).squeeze()
-    #np.save("./psf.npy", res)
-    #res = np.load("./psf.npy")
-    #print(res.shape)
-    # point = data[231]
-    # fft_hq = abs((fft2(point[0][:,:,0])))
-    # fft_hq *= 255.0 / fft_hq.max()
-    # fft_lq = abs((fft2(point[1][:,:,0]))
-    # fft_lq *= 255.0 / fft_lq.max()
-    # utils.display_two(point[1][:,:,0], point[0][:,:,0])
-    # utils.display_two(fft_lq, fft_hq)
-    
-    # res = utils.find_filter(point[1], point[0], window=5)
-    # #print(res)
-    # # print(res.shape)
-    # # plt.imshow(res)
-    # # plt.show()
-    # rc = utils.reconstruct(res, point[1])
-    # # print(rc)
-    # utils.display_three(point[0], point[1], rc)
-
-    # point2 = data[3]
-    # rc = utils.reconstruct(res, point2[0])
-    # # # print(rc)
-    # utils.display_three(point2[0], point2[1], rc)
-
+    utils.display_three(point[0], point[1], res)
 
 if __name__ == "__main__":
     main()
