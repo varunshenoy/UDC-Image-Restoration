@@ -1,6 +1,6 @@
 # A Deep Learning Approach for Image Reconstruction from Smartphone Under Display Camera Technology
 
-[[Link to Paper](https://drive.google.com/file/d/1VmDokbk1IPoq2yj3uOUNIIVZycN-4ROV/view)]
+[ [Link to Paper](https://drive.google.com/file/d/1VmDokbk1IPoq2yj3uOUNIIVZycN-4ROV/view) ]
 
 Authors: Varun Shenoy (vnshenoy@stanford.edu) and Arjun Dhawan (akdhawan@stanford.edu)
 
